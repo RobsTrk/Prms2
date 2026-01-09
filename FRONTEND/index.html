@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PRMS+ | Hospital Dashboard</title>
+
+    <!-- 1. TAILWIND CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- 2. CHART.JS (For the Vitals Graph) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- 3. CONFIG -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        medical: {
+                            50: '#f0fdfa', 100: '#ccfbf1', 600: '#0d9488', 700: '#0f766e', 900: '#134e4a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- ICONS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        /* Clean Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+
+        /* Animation for Recording */
+        @keyframes pulse-ring {
+            0% {
+                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+            }
+
+            70% {
+                box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+            }
+        }
+
+        .recording-active {
+            animation: pulse-ring 2s infinite;
+        }
+
+        /* Role Visibility Utilities */
+        .admin-only,
+        .nurse-only {
+            display: none !important;
+        }
+
+        body.role-admin .admin-only {
+            display: block !important;
+        }
+
+        body.role-admin.flex .admin-only {
+            display: flex !important;
+        }
+
+        /* Fix for flex containers */
+        body.role-nurse .nurse-only {
+            display: block !important;
+        }
+    </style>
+</head>
+
+<body class="bg-slate-50 text-slate-800 font-sans h-screen overflow-hidden flex transition-colors duration-500">
+
+    <!-- SIDEBAR -->
+    <aside class="w-64 bg-medical-900 text-white flex flex-col shadow-2xl z-20 transition-colors duration-500"
+        id="sidebar">
+        <!-- Logo -->
+        <div class="p-6 flex items-center gap-3 border-b border-white/10">
+            <div class="bg-white text-medical-700 p-2 rounded-lg shadow-lg">
+                <i class="fa-solid fa-heart-pulse text-xl"></i>
+            </div>
+            <h1 class="text-xl font-bold tracking-wide">PRMS<span class="text-teal-300">+</span></h1>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="flex-1 p-4 space-y-2">
+            <a href="#" onclick="showDashboard()"
+                class="flex items-center gap-3 px-4 py-3 bg-white/10 rounded-lg text-white shadow-md border-l-4 border-teal-300">
+                <i class="fa-solid fa-table-columns w-5"></i> Dashboard
+            </a>
+            <!-- Nurse cannot see reports -->
+            <a href="#" onclick="showReports()"
+                class="admin-only flex items-center gap-3 px-4 py-3 text-teal-100 hover:bg-white/10 hover:text-white rounded-lg transition">
+                <i class="fa-solid fa-file-contract w-5"></i> Reports
+            </a>
+        </nav>
+
+        <!-- User Profile & Logout -->
+        <div class="p-4 border-t border-white/10 bg-black/10">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-teal-200 flex items-center justify-center text-medical-900 font-bold border-2 border-white"
+                        id="user-avatar">DA</div>
+                    <div>
+                        <p class="text-sm font-semibold" id="user-name">Dr. Admin</p>
+                        <p class="text-xs text-teal-200 capitalize" id="user-role">Role</p>
+                    </div>
+                </div>
+                <!-- LOGOUT BUTTON -->
+                <button onclick="logout()"
+                    class="text-teal-200 hover:text-white hover:bg-white/10 p-2 rounded-full transition" title="Logout">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="flex-1 flex flex-col h-screen overflow-hidden relative">
+
+        <!-- HEADER -->
+        <header
+            class="bg-white h-16 border-b border-slate-200 flex items-center justify-between px-8 shadow-sm z-10 transition-colors duration-500"
+            id="header">
+            <h2 class="text-xl font-semibold text-slate-700 flex items-center gap-2">
+                <i class="fa-solid fa-hospital-user text-slate-400"></i> Central Station
+            </h2>
+
+            <div class="flex gap-4 items-center">
+                <!-- Add Patient Button (Admin Only) -->
+                <button onclick="openAddPatientModal()"
+                    class="admin-only bg-medical-600 hover:bg-medical-700 text-white text-sm font-bold px-4 py-2 rounded-lg shadow-sm transition">
+                    <i class="fa-solid fa-plus mr-1"></i> Add Patient
+                </button>
+
+                <!-- EMERGENCY TOGGLE - Nurse Only -->
+                <button onclick="toggleEmergency()"
+                    class="nurse-only w-10 h-10 rounded-full bg-red-50 text-red-500 hover:bg-red-600 hover:text-white border border-red-100 transition shadow-sm animate-pulse"
+                    title="Declare Code Blue">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                </button>
+
+                <div class="h-6 w-px bg-slate-300 mx-2"></div>
+
+                <button class="w-10 h-10 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200"><i
+                        class="fa-solid fa-bell"></i></button>
+            </div>
+        </header>
+
+        <!-- CONTENT AREA -->
+        <div class="flex-1 overflow-hidden relative">
+
+            <!-- VIEW 1: DASHBOARD (Split View) -->
+            <div id="dashboard-view" class="h-full p-6 grid grid-cols-12 gap-6 transition-all duration-300">
+
+                <!-- LEFT COLUMN: Patient List -->
+                <div
+                    class="col-span-4 bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col h-full overflow-hidden">
+                    <div class="p-5 border-b border-slate-100 bg-slate-50/50">
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="font-bold text-slate-700">Waiting Queue</h3>
+                            <span class="bg-medical-100 text-medical-700 text-xs font-bold px-2 py-1 rounded-full"><span
+                                    id="active-count">0</span> Active</span>
+                        </div>
+                        <div class="relative">
+                            <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-400"></i>
+                            <input type="text" placeholder="Search ID or Name..."
+                                class="w-full pl-10 pr-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-medical-600 focus:border-transparent text-sm transition">
+                        </div>
+                    </div>
+
+                    <div id="patient-list" class="overflow-y-auto flex-1 p-3 space-y-2 bg-slate-50/30">
+                        <!-- JS Injects Patients Here -->
+                    </div>
+                </div>
+
+                <!-- RIGHT COLUMN: Details -->
+                <div
+                    class="col-span-8 bg-white rounded-2xl shadow-sm border border-slate-200 h-full overflow-hidden flex flex-col relative">
+
+                    <!-- EMPTY STATE -->
+                    <div id="empty-state"
+                        class="absolute inset-0 flex flex-col items-center justify-center text-slate-400 bg-white z-0">
+                        <div class="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center mb-4">
+                            <i class="fa-solid fa-user-doctor text-4xl text-slate-300"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-slate-600">No Patient Selected</h3>
+                        <p class="text-sm">Select a patient from the queue to view records.</p>
+                    </div>
+
+                    <!-- PATIENT DETAIL VIEW -->
+                    <div id="patient-detail" class="hidden h-full flex flex-col z-10 bg-white">
+
+                        <!-- Detail Header -->
+                        <div
+                            class="p-6 border-b border-slate-100 flex justify-between items-start bg-gradient-to-r from-slate-50 to-white">
+                            <div>
+                                <div class="flex items-center gap-3 mb-1">
+                                    <h2 id="p-name" class="text-2xl font-bold text-slate-800">--</h2>
+                                    <span id="p-status"
+                                        class="px-2 py-1 text-xs font-bold rounded-full bg-green-100 text-green-700 shadow-sm">STABLE</span>
+                                </div>
+                                <div class="flex gap-4 text-sm text-slate-500 mt-1">
+                                    <span><i class="fa-regular fa-id-card"></i> ID: #<span id="p-id">--</span></span>
+                                    <span><i class="fa-solid fa-venus-mars"></i> <span id="p-gender">--</span></span>
+                                    <span><i class="fa-solid fa-cake-candles"></i> <span id="p-dob">--</span></span>
+                                </div>
+                            </div>
+                            <div class="flex gap-2">
+                                <!-- Admin Only: Discharge -->
+                                <button onclick="dischargePatient()"
+                                    class="admin-only group flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-600 px-4 py-2.5 rounded-xl shadow-sm transition-all active:scale-95">
+                                    <i class="fa-solid fa-door-open"></i>
+                                    <span>Discharge</span>
+                                </button>
+
+                                <!-- Admin Only: AI Summary -->
+                                <button onclick="generateAI()"
+                                    class="admin-only group flex items-center gap-2 bg-gradient-to-r from-medical-600 to-teal-500 hover:from-medical-700 hover:to-teal-600 text-white px-5 py-2.5 rounded-xl shadow-md transition-all active:scale-95">
+                                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                                    <span>AI Summary</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Scrollable Content -->
+                        <div class="flex-1 overflow-y-auto p-8 custom-scrollbar">
+
+                            <!-- AI BOX (Admin Only) -->
+                            <div id="ai-box"
+                                class="hidden mb-8 p-5 bg-emerald-50 border border-emerald-100 rounded-xl relative overflow-hidden transition-all duration-300">
+                                <div class="absolute top-0 right-0 p-4 opacity-10"><i
+                                        class="fa-solid fa-brain text-6xl text-emerald-600"></i></div>
+                                <h4 class="font-bold text-emerald-800 mb-2 flex items-center gap-2"><i
+                                        class="fa-solid fa-robot"></i> Clinical Snapshot (AI)</h4>
+                                <p id="ai-text" class="text-emerald-900/80 text-sm leading-relaxed">Generating
+                                    analysis...</p>
+                            </div>
+
+                            <!-- WIDGET GRID -->
+                            <div class="grid grid-cols-2 gap-6 mb-8">
+
+
+
+                                <!-- WIDGET 1: CLINICAL ORDERS / INSTRUCTIONS -->
+                                <div class="bg-blue-50 border border-blue-100 rounded-xl p-4 flex flex-col h-60">
+                                    <h4 class="font-bold text-blue-900 text-sm mb-3 flex items-center gap-2">
+                                        <i class="fa-solid fa-clipboard-list"></i> Clinical Orders
+                                    </h4>
+
+                                    <!-- List Area -->
+                                    <div id="instructions-list"
+                                        class="flex-1 overflow-y-auto space-y-2 mb-3 custom-scrollbar bg-white/50 rounded p-2">
+                                        <!-- JS Injects items here -->
+                                        <div
+                                            class="text-xs text-blue-400 italic text-center py-2 h-full flex items-center justify-center">
+                                            No active orders</div>
+                                    </div>
+
+                                    <!-- Doctor Input Area -->
+                                    <div class="admin-only mt-auto pt-2 border-t border-blue-100">
+                                        <div class="flex gap-2">
+                                            <input type="text" id="new-order-text" placeholder="Rx / Instruction..."
+                                                class="flex-1 text-xs px-2 py-1.5 rounded border border-blue-200 focus:outline-none focus:ring-1 focus:ring-blue-500">
+                                            <button onclick="addInstruction()"
+                                                class="bg-blue-600 text-white text-xs px-3 rounded hover:bg-blue-700">Send</button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- WIDGET 2: RADIOLOGY & SCANS -->
+                                <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 flex flex-col h-60">
+                                    <h4 class="font-bold text-slate-700 text-sm mb-3 flex items-center gap-2">
+                                        <i class="fa-solid fa-x-ray"></i> Radiology & Scans
+                                    </h4>
+
+                                    <!-- Scan List (Shared View) -->
+                                    <div id="scans-list"
+                                        class="flex-1 overflow-y-auto space-y-2 mb-3 custom-scrollbar bg-white rounded p-2 border border-slate-100">
+                                        <!-- JS Injects items here -->
+                                        <div
+                                            class="text-xs text-slate-400 italic text-center py-2 h-full flex items-center justify-center">
+                                            No scans uploaded</div>
+                                    </div>
+
+                                    <!-- Nurse Upload Area -->
+                                    <div class="nurse-only mt-auto pt-2 border-t border-slate-200">
+                                        <div class="grid grid-cols-2 gap-2 mb-2">
+                                            <select id="scan-type" class="text-xs p-1 rounded border">
+                                                <option>X-Ray</option>
+                                                <option>MRI</option>
+                                                <option>CT</option>
+                                                <option>Ultrasound</option>
+                                            </select>
+                                            <input type="date" id="scan-date" class="text-xs p-1 rounded border">
+                                        </div>
+                                        <button onclick="addScan()"
+                                            class="w-full bg-slate-600 text-white text-xs py-1.5 rounded hover:bg-slate-700">
+                                            <i class="fa-solid fa-upload mr-1"></i> Upload Report
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- WIDGET 3: CONDITION UPDATE (Shared) -->
+                                <div class="p-4 bg-orange-50 border border-orange-100 rounded-xl col-span-1">
+                                    <h4 class="font-bold text-orange-900 text-sm mb-2"><i
+                                            class="fa-solid fa-notes-medical mr-1"></i> Condition / Visit Update</h4>
+
+                                    <!-- Status Update (Added) -->
+                                    <select id="update-status"
+                                        class="w-full text-xs p-2 mb-2 rounded border border-orange-200 text-orange-900">
+                                        <option value="">-- Keep Current Status --</option>
+                                        <option value="Stable">Stable</option>
+                                        <option value="Recovering">Recovering</option>
+                                        <option value="Critical">Critical</option>
+                                    </select>
+
+                                    <div class="relative">
+                                        <textarea id="nurse-note"
+                                            class="w-full h-20 p-2 text-xs bg-white border border-orange-200 rounded mb-2 pr-8"
+                                            placeholder="Clinical note or observation (Type or Speak)..."></textarea>
+                                        <button onclick="toggleVoiceRecording()" id="mic-btn"
+                                            class="absolute right-2 bottom-4 text-slate-400 hover:text-red-500 transition"
+                                            title="Voice Scribe">
+                                            <i class="fa-solid fa-microphone"></i>
+                                        </button>
+                                    </div>
+
+                                    <div class="flex items-center gap-2 mb-2">
+                                        <label
+                                            class="text-xs font-bold text-orange-800 whitespace-nowrap">Discharge:</label>
+                                        <input type="datetime-local" id="nurse-discharge"
+                                            class="w-full p-1 text-xs border border-orange-200 rounded">
+                                    </div>
+
+                                    <button onclick="updatePatientCondition()"
+                                        class="w-full bg-orange-500 text-white text-xs font-bold py-2 rounded shadow-sm hover:bg-orange-600">
+                                        Submit Update
+                                    </button>
+                                </div>
+
+                                <!-- WIDGET 3: VITALS CHART (Shared, but Input is Admin Only) -->
+                                <div class="p-4 bg-white border border-slate-200 rounded-xl shadow-sm">
+                                    <h4 class="font-bold text-slate-700 text-sm mb-2"><i
+                                            class="fa-solid fa-heart-pulse text-medical-600 mr-1"></i> Live Vitals (HR)
+                                    </h4>
+
+                                    <!-- Input (Shared) -->
+                                    <div class="flex gap-2 mb-2">
+                                        <input type="number" id="vitals-input" placeholder="BPM"
+                                            class="w-20 px-2 py-1 text-xs border border-slate-200 rounded focus:outline-none focus:border-medical-600">
+                                        <button onclick="addVital()"
+                                            class="bg-medical-600 text-white text-xs px-3 py-1 rounded hover:bg-medical-700 transition">Add</button>
+                                    </div>
+
+                                    <div class="h-32 w-full">
+                                        <canvas id="vitalsChart"></canvas>
+                                    </div>
+                                </div>
+
+                            </div>
+
+                            <!-- TIMELINE -->
+                            <h3
+                                class="font-bold text-slate-800 mb-6 flex items-center gap-2 border-b pb-2 border-slate-100">
+                                <i class="fa-solid fa-clock-rotate-left text-slate-400"></i> Medical Timeline
+                            </h3>
+
+                            <div id="timeline-container" class="space-y-0 relative border-l-2 border-slate-200 ml-3">
+                                <!-- JS Injects Timeline Here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW 2: REPORTS (Admin Only) -->
+            <div id="reports-view" class="hidden h-full p-8 overflow-y-auto bg-slate-50">
+                <div class="max-w-5xl mx-auto">
+                    <h2 class="text-3xl font-bold text-slate-800 mb-6">Patient Census Report</h2>
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                        <div
+                            class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                            <div>
+                                <h3 class="font-bold text-slate-700">Daily Census</h3>
+                                <p class="text-xs text-slate-500">Official count of all admitted patients.</p>
+                            </div>
+                            <button onclick="window.print()"
+                                class="text-xs font-bold text-medical-700 hover:underline"><i
+                                    class="fa-solid fa-print mr-1"></i> Print / Save PDF</button>
+                        </div>
+                        <table class="w-full text-left border-collapse">
+                            <thead class="bg-slate-50 border-b border-slate-200">
+                                <tr>
+                                    <th class="p-4 text-xs font-bold text-slate-500 uppercase">ID</th>
+                                    <th class="p-4 text-xs font-bold text-slate-500 uppercase">Patient Name</th>
+                                    <th class="p-4 text-xs font-bold text-slate-500 uppercase">Status</th>
+                                    <th class="p-4 text-xs font-bold text-slate-500 uppercase">Gender</th>
+                                    <th class="p-4 text-xs font-bold text-slate-500 uppercase">Expected Discharge</th>
+                                </tr>
+                            </thead>
+                            <tbody id="reports-table-body" class="text-sm text-slate-700 divide-y divide-slate-100">
+                                <!-- JS Injects Rows -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- ADD PATIENT MODAL (Admin Only) -->
+    <div id="add-patient-modal"
+        class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center backdrop-blur-sm">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 transform transition-all scale-100">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold text-slate-800">Admit New Patient</h3>
+                <button onclick="closeAddPatientModal()" class="text-slate-400 hover:text-slate-600"><i
+                        class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+
+            <form id="addPatientForm" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Full Name</label>
+                    <input type="text" id="new-name"
+                        class="w-full p-3 rounded-lg border border-slate-200 focus:ring-2 focus:ring-medical-600 focus:outline-none"
+                        required placeholder="e.g. John Doe">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Date of Birth</label>
+                        <input type="date" id="new-dob"
+                            class="w-full p-3 rounded-lg border border-slate-200 focus:ring-2 focus:ring-medical-600 focus:outline-none"
+                            required>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Gender</label>
+                        <select id="new-gender"
+                            class="w-full p-3 rounded-lg border border-slate-200 focus:ring-2 focus:ring-medical-600 focus:outline-none">
+                            <option>Male</option>
+                            <option>Female</option>
+                            <option>Other</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Initial Status</label>
+                    <select id="new-status"
+                        class="w-full p-3 rounded-lg border border-slate-200 focus:ring-2 focus:ring-medical-600 focus:outline-none">
+                        <option value="Stable">Stable</option>
+                        <option value="Critical">Critical</option>
+                        <option value="Recovering">Recovering</option>
+                    </select>
+                </div>
+
+                <button type="submit"
+                    class="w-full bg-medical-600 text-white font-bold py-3 rounded-xl shadow-lg hover:bg-medical-700 transition mt-2">
+                    Admit Patient
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Connect JS -->
+    <script src="app.js"></script>
+</body>
+
+</html>
