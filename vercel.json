@@ -2,29 +2,39 @@
   "version": 2,
   "builds": [
     {
+      "src": "BACKEND/main.py",
+      "use": "@vercel/python"
+    },
+    {
       "src": "FRONTEND/**",
       "use": "@vercel/static"
     }
   ],
-  "routes": [
-    {
-      "src": "/(.*\\.(html|js|css|ico|png|jpg|jpeg|svg|woff|woff2|ttf|eot))",
-      "dest": "/FRONTEND/$1"
-    },
-    {
-      "src": "/login",
-      "dest": "/FRONTEND/login.html"
-    },
-    {
-      "src": "/",
-      "dest": "/FRONTEND/index.html"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/FRONTEND/$1"
-    }
-  ],
   "rewrites": [
+    {
+      "source": "/login",
+      "destination": "/BACKEND/main.py"
+    },
+    {
+      "source": "/patients(.*)",
+      "destination": "/BACKEND/main.py"
+    },
+    {
+      "source": "/emergency",
+      "destination": "/BACKEND/main.py"
+    },
+    {
+      "source": "/docs",
+      "destination": "/BACKEND/main.py"
+    },
+    {
+      "source": "/openapi.json",
+      "destination": "/BACKEND/main.py"
+    },
+    {
+      "source": "/",
+      "destination": "/FRONTEND/index.html"
+    },
     {
       "source": "/(.*)",
       "destination": "/FRONTEND/$1"
