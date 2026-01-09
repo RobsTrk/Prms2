@@ -2,7 +2,37 @@
 // PRMS+ FRONTEND LOGIC (INTEGRATED)
 // ==========================================
 
-const API_BASE = "http://127.0.0.1:8000";
+// Environment-aware API URL
+// Automatically detects if running locally or in production
+// For production, replace the placeholder with your actual deployed backend URL
+function getApiBase() {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/36938da8-9a3b-4b1f-82c9-620a2f6e5d7d',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app.js:9',message:'getApiBase entry',data:{hostname:window.location.hostname,protocol:window.location.protocol,href:window.location.href},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
+    const hostname = window.location.hostname;
+    
+    // Development: localhost or 127.0.0.1
+    if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '') {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/36938da8-9a3b-4b1f-82c9-620a2f6e5d7d',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app.js:13',message:'getApiBase localhost branch',data:{result:'http://127.0.0.1:8000'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+        // #endregion
+        return "http://127.0.0.1:8000";
+    }
+    
+    // Production: use your deployed backend URL
+    // TODO: Replace this with your actual backend deployment URL
+    // Example: "https://your-app-name.railway.app" or "https://api.yourdomain.com"
+    const apiUrl = window.API_BASE_URL || "https://your-backend-url.railway.app";
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/36938da8-9a3b-4b1f-82c9-620a2f6e5d7d',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app.js:19',message:'getApiBase production branch',data:{apiUrl,hasWindowOverride:!!window.API_BASE_URL},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
+    return apiUrl;
+}
+
+const API_BASE = getApiBase();
+// #region agent log
+fetch('http://127.0.0.1:7242/ingest/36938da8-9a3b-4b1f-82c9-620a2f6e5d7d',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app.js:22',message:'API_BASE initialized',data:{apiBase:API_BASE},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+// #endregion
 
 const currentUser = localStorage.getItem('prms_user');
 const currentRole = localStorage.getItem('prms_role'); // 'admin' or 'nurse'
@@ -57,10 +87,19 @@ function initDashboard() {
 }
 
 async function fetchPatients() {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/36938da8-9a3b-4b1f-82c9-620a2f6e5d7d',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app.js:77',message:'fetchPatients entry',data:{apiBase:API_BASE,url:`${API_BASE}/patients`},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+    // #endregion
     try {
         const response = await fetch(`${API_BASE}/patients`);
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/36938da8-9a3b-4b1f-82c9-620a2f6e5d7d',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app.js:79',message:'fetchPatients response received',data:{ok:response.ok,status:response.status,statusText:response.statusText},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+        // #endregion
         if (!response.ok) throw new Error("API Error");
         patients = await response.json();
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/36938da8-9a3b-4b1f-82c9-620a2f6e5d7d',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app.js:81',message:'fetchPatients success',data:{patientCount:patients.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+        // #endregion
         renderPatientList();
 
         // Refresh detail view if open
@@ -69,18 +108,30 @@ async function fetchPatients() {
             if (updated) selectPatient(updated.id);
         }
     } catch (err) {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/36938da8-9a3b-4b1f-82c9-620a2f6e5d7d',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app.js:88',message:'fetchPatients error',data:{error:err.message,stack:err.stack,name:err.name},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+        // #endregion
         console.error(err);
-        document.getElementById('patient-list').innerHTML = `<p class="text-red-500 p-4 text-xs">🔴 Backend Offline. Ensure 'main.py' is running.</p>`;
+        const listEl = document.getElementById('patient-list');
+        if (listEl) listEl.innerHTML = `<p class="text-red-500 p-4 text-xs">🔴 Backend Offline. Ensure 'main.py' is running.</p>`;
     }
 }
 
 // --- 2. LOGIN LOGIC ---
 async function handleLogin(e) {
     e.preventDefault();
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/36938da8-9a3b-4b1f-82c9-620a2f6e5d7d',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app.js:95',message:'handleLogin entry',data:{apiBase:API_BASE,url:`${API_BASE}/login`},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+    // #endregion
     const usernameInput = document.getElementById('email');
     const passwordInput = document.getElementById('password');
 
-    if (!usernameInput || !passwordInput) return;
+    if (!usernameInput || !passwordInput) {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/36938da8-9a3b-4b1f-82c9-620a2f6e5d7d',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app.js:100',message:'handleLogin missing inputs',data:{hasUsername:!!usernameInput,hasPassword:!!passwordInput},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+        // #endregion
+        return;
+    }
 
     try {
         const res = await fetch(`${API_BASE}/login`, {
@@ -88,16 +139,31 @@ async function handleLogin(e) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username: usernameInput.value, password: passwordInput.value })
         });
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/36938da8-9a3b-4b1f-82c9-620a2f6e5d7d',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app.js:107',message:'handleLogin response',data:{ok:res.ok,status:res.status,statusText:res.statusText},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+        // #endregion
 
-        if (!res.ok) { alert('Invalid Credentials'); return; }
+        if (!res.ok) { 
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/36938da8-9a3b-4b1f-82c9-620a2f6e5d7d',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app.js:109',message:'handleLogin failed auth',data:{status:res.status},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+            // #endregion
+            alert('Invalid Credentials'); 
+            return; 
+        }
 
         const data = await res.json();
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/36938da8-9a3b-4b1f-82c9-620a2f6e5d7d',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app.js:116',message:'handleLogin success',data:{username:data.username,role:data.role},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+        // #endregion
         localStorage.setItem('prms_user', data.username);
         localStorage.setItem('prms_role', data.role);
         window.location.href = 'index.html';
 
     } catch (error) {
-        alert("Cannot connect to server.");
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/36938da8-9a3b-4b1f-82c9-620a2f6e5d7d',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app.js:122',message:'handleLogin error',data:{error:error.message,stack:error.stack,name:error.name},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+        // #endregion
+        alert("Cannot connect to server: " + error.message);
     }
 }
 
@@ -146,32 +212,41 @@ function renderPatientList() {
 
 function selectPatient(id) {
     currentPatient = patients.find(p => p.id === id);
+    if (!currentPatient) return;
 
     // Switch to detail view if in dashboard
     const dash = document.getElementById('dashboard-view');
-    if (!dash.classList.contains('hidden')) {
-        document.getElementById('empty-state').classList.add('hidden');
-        document.getElementById('patient-detail').classList.remove('hidden');
+    if (dash && !dash.classList.contains('hidden')) {
+        const emptyState = document.getElementById('empty-state');
+        const patientDetail = document.getElementById('patient-detail');
+        if (emptyState) emptyState.classList.add('hidden');
+        if (patientDetail) patientDetail.classList.remove('hidden');
     }
 
     // Header Info
-    document.getElementById('p-name').innerText = currentPatient.name;
-    document.getElementById('p-id').innerText = currentPatient.id;
-    document.getElementById('p-gender').innerText = currentPatient.gender;
-    document.getElementById('p-dob').innerText = currentPatient.dob;
+    const nameEl = document.getElementById('p-name');
+    if (nameEl) nameEl.innerText = currentPatient.name || '--';
+    const idEl = document.getElementById('p-id');
+    if (idEl) idEl.innerText = currentPatient.id || '--';
+    const genderEl = document.getElementById('p-gender');
+    if (genderEl) genderEl.innerText = currentPatient.gender || '--';
+    const dobEl = document.getElementById('p-dob');
+    if (dobEl) dobEl.innerText = currentPatient.dob || '--';
 
     // Status Badge
     const badge = document.getElementById('p-status');
-    badge.innerText = currentPatient.status;
-    badge.className = `px-2 py-1 text-xs font-bold rounded-full shadow-sm ${currentPatient.status === 'Critical' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`;
+    if (badge) {
+        badge.innerText = currentPatient.status || 'Unknown';
+        badge.className = `px-2 py-1 text-xs font-bold rounded-full shadow-sm ${currentPatient.status === 'Critical' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`;
+    }
 
     // Components
-    renderTimeline(currentPatient.history);
+    renderTimeline(currentPatient.history || []);
     renderChart(currentPatient);
     renderInstructions(currentPatient.instructions || []);
 
     // Scans
-    const scanRecords = (currentPatient.history || []).filter(h => h.type === 'Radiology' || h.type.includes('Scan'));
+    const scanRecords = (currentPatient.history || []).filter(h => h && (h.type === 'Radiology' || (h.type && h.type.includes('Scan'))));
     renderScans(scanRecords);
 
     // Clear Inputs
@@ -256,75 +331,110 @@ function renderScans(list) {
 
 // Update Condition / Notes (Includes Voice logic)
 async function updatePatientCondition() {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/36938da8-9a3b-4b1f-82c9-620a2f6e5d7d',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app.js:275',message:'updatePatientCondition entry',data:{hasPatient:!!currentPatient,patientId:currentPatient?.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+    // #endregion
     if (!currentPatient) return;
-    const note = document.getElementById('nurse-note').value;
-    const status = document.getElementById('update-status').value;
-    const discharge = document.getElementById('nurse-discharge').value;
+    const note = document.getElementById('nurse-note')?.value || '';
+    const status = document.getElementById('update-status')?.value || '';
+    const discharge = document.getElementById('nurse-discharge')?.value || '';
 
     if (!note && !status && !discharge) return alert("Please enter some info.");
 
-    // 1. Save Note/History
-    if (note || status) {
-        await fetch(`${API_BASE}/patients/${currentPatient.id}/record`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
-                type: "Condition Update",
-                description: note ? note : `Status changed to ${status}`,
-                icon: "fa-notes-medical",
-                color: "text-orange-600"
-            })
-        });
+    try {
+        // 1. Save Note/History
+        if (note || status) {
+            const recordRes = await fetch(`${API_BASE}/patients/${currentPatient.id}/record`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
+                    type: "Condition Update",
+                    description: note ? note : `Status changed to ${status}`,
+                    icon: "fa-notes-medical",
+                    color: "text-orange-600"
+                })
+            });
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/36938da8-9a3b-4b1f-82c9-620a2f6e5d7d',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app.js:289',message:'updatePatientCondition record response',data:{ok:recordRes.ok,status:recordRes.status},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+            // #endregion
+        }
+
+        // 2. Update status/discharge
+        const updates = {};
+        if (status) updates.status = status;
+        if (discharge) updates.discharge_time = discharge.replace('T', ' ');
+
+        if (Object.keys(updates).length > 0) {
+            const updateRes = await fetch(`${API_BASE}/patients/${currentPatient.id}/update`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updates)
+            });
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/36938da8-9a3b-4b1f-82c9-620a2f6e5d7d',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app.js:304',message:'updatePatientCondition update response',data:{ok:updateRes.ok,status:updateRes.status,updates},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+            // #endregion
+        }
+
+        alert("✅ Record Updated");
+        const noteEl = document.getElementById('nurse-note');
+        if (noteEl) noteEl.value = "";
+        const statusEl = document.getElementById('update-status');
+        if (statusEl) statusEl.value = "";
+        fetchPatients();
+    } catch (err) {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/36938da8-9a3b-4b1f-82c9-620a2f6e5d7d',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app.js:311',message:'updatePatientCondition error',data:{error:err.message,stack:err.stack},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+        // #endregion
+        alert("Error updating patient: " + err.message);
     }
-
-    // 2. Update status/discharge
-    const updates = {};
-    if (status) updates.status = status;
-    if (discharge) updates.discharge_time = discharge.replace('T', ' ');
-
-    if (Object.keys(updates).length > 0) {
-        await fetch(`${API_BASE}/patients/${currentPatient.id}/update`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(updates)
-        });
-    }
-
-    alert("✅ Record Updated");
-    document.getElementById('nurse-note').value = "";
-    document.getElementById('update-status').value = "";
-    fetchPatients();
 }
 
 // Add Vital
 async function addVital() {
-    const val = parseInt(document.getElementById('vitals-input').value);
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/36938da8-9a3b-4b1f-82c9-620a2f6e5d7d',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app.js:318',message:'addVital entry',data:{hasPatient:!!currentPatient,patientId:currentPatient?.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+    // #endregion
+    const inputEl = document.getElementById('vitals-input');
+    const val = inputEl ? parseInt(inputEl.value) : NaN;
     if (!val || !currentPatient) return;
 
     if (val > 120) alert("⚠️ High HR Alert!");
 
-    // Update Array & History
-    await fetch(`${API_BASE}/patients/${currentPatient.id}/update`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ vitals_update: val })
-    });
+    try {
+        // Update Array & History
+        const updateRes = await fetch(`${API_BASE}/patients/${currentPatient.id}/update`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ vitals_update: val })
+        });
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/36938da8-9a3b-4b1f-82c9-620a2f6e5d7d',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app.js:327',message:'addVital update response',data:{ok:updateRes.ok,status:updateRes.status,val},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+        // #endregion
 
-    await fetch(`${API_BASE}/patients/${currentPatient.id}/record`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            date: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            type: "Vitals",
-            description: `HR Recorded: ${val} bpm`,
-            icon: "fa-heart-pulse",
-            color: "text-blue-500"
-        })
-    });
+        const recordRes = await fetch(`${API_BASE}/patients/${currentPatient.id}/record`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                date: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                type: "Vitals",
+                description: `HR Recorded: ${val} bpm`,
+                icon: "fa-heart-pulse",
+                color: "text-blue-500"
+            })
+        });
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/36938da8-9a3b-4b1f-82c9-620a2f6e5d7d',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app.js:338',message:'addVital record response',data:{ok:recordRes.ok,status:recordRes.status},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+        // #endregion
 
-    document.getElementById('vitals-input').value = "";
-    fetchPatients();
+        if (inputEl) inputEl.value = "";
+        fetchPatients();
+    } catch (err) {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/36938da8-9a3b-4b1f-82c9-620a2f6e5d7d',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app.js:344',message:'addVital error',data:{error:err.message,stack:err.stack},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+        // #endregion
+        alert("Error adding vital: " + err.message);
+    }
 }
 
 // Add Patient (Admin)
@@ -351,7 +461,8 @@ if (addForm) addForm.addEventListener('submit', handleAddPatient);
 
 // Instructions
 async function addInstruction() {
-    const text = document.getElementById('new-order-text').value;
+    const textEl = document.getElementById('new-order-text');
+    const text = textEl ? textEl.value : '';
     if (!text || !currentPatient) return;
 
     const list = [...(currentPatient.instructions || [])];
@@ -363,77 +474,110 @@ async function addInstruction() {
         status: 'pending'
     });
 
-    await fetch(`${API_BASE}/patients/${currentPatient.id}/update`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ instructions_update: list })
-    });
-
-    document.getElementById('new-order-text').value = "";
-    fetchPatients();
-}
-
-async function toggleInstruction(id) {
-    const list = [...currentPatient.instructions];
-    const item = list.find(i => i.id === id);
-    if (item) {
-        item.status = item.status === 'done' ? 'pending' : 'done';
-        await fetch(`${API_BASE}/patients/${currentPatient.id}/update`, {
+    try {
+        const res = await fetch(`${API_BASE}/patients/${currentPatient.id}/update`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ instructions_update: list })
         });
-        fetchPatients();
+        if (res.ok) {
+            if (textEl) textEl.value = "";
+            fetchPatients();
+        } else {
+            alert("Error adding instruction");
+        }
+    } catch (err) {
+        alert("Error adding instruction: " + err.message);
+    }
+}
+
+async function toggleInstruction(id) {
+    if (!currentPatient) return;
+    const list = [...currentPatient.instructions];
+    const item = list.find(i => i.id === id);
+    if (item) {
+        item.status = item.status === 'done' ? 'pending' : 'done';
+        try {
+            const res = await fetch(`${API_BASE}/patients/${currentPatient.id}/update`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ instructions_update: list })
+            });
+            if (res.ok) {
+                fetchPatients();
+            }
+        } catch (err) {
+            console.error('Error toggling instruction:', err);
+        }
     }
 }
 
 // Scans
 async function addScan() {
-    const type = document.getElementById('scan-type').value;
-    const date = document.getElementById('scan-date').value;
-    if (!date || !currentPatient) return alert("Select Date");
+    if (!currentPatient) return alert("No patient selected");
+    const typeEl = document.getElementById('scan-type');
+    const dateEl = document.getElementById('scan-date');
+    const type = typeEl ? typeEl.value : '';
+    const date = dateEl ? dateEl.value : '';
+    if (!date) return alert("Select Date");
 
-    await fetch(`${API_BASE}/patients/${currentPatient.id}/record`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            date: date,
-            type: "Radiology",
-            description: `${type} report uploaded.`,
-            icon: "fa-file-medical",
-            color: "text-indigo-600"
-        })
-    });
-    fetchPatients();
+    try {
+        const res = await fetch(`${API_BASE}/patients/${currentPatient.id}/record`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                date: date,
+                type: "Radiology",
+                description: `${type} report uploaded.`,
+                icon: "fa-file-medical",
+                color: "text-indigo-600"
+            })
+        });
+        if (res.ok) {
+            fetchPatients();
+        } else {
+            alert("Error adding scan");
+        }
+    } catch (err) {
+        alert("Error adding scan: " + err.message);
+    }
 }
 
 // Discharge
 async function dischargePatient() {
     if (!currentPatient || !confirm("Discharge Patient?")) return;
 
-    await fetch(`${API_BASE}/patients/${currentPatient.id}/update`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            status: "Discharged",
-            discharge_time: new Date().toLocaleTimeString()
-        })
-    });
+    try {
+        const updateRes = await fetch(`${API_BASE}/patients/${currentPatient.id}/update`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                status: "Discharged",
+                discharge_time: new Date().toLocaleTimeString()
+            })
+        });
 
-    await fetch(`${API_BASE}/patients/${currentPatient.id}/record`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            date: new Date().toLocaleDateString(),
-            type: "Discharge",
-            description: "Patient discharged.",
-            icon: "fa-door-open",
-            color: "text-slate-500"
-        })
-    });
+        const recordRes = await fetch(`${API_BASE}/patients/${currentPatient.id}/record`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                date: new Date().toLocaleDateString(),
+                type: "Discharge",
+                description: "Patient discharged.",
+                icon: "fa-door-open",
+                color: "text-slate-500"
+            })
+        });
 
-    alert("Patient Discharged");
-    fetchPatients();
+        if (updateRes.ok && recordRes.ok) {
+            alert("Patient Discharged");
+            fetchPatients();
+        } else {
+            alert("Error discharging patient");
+        }
+    } catch (err) {
+        alert("Error discharging patient: " + err.message);
+    }
 }
 
 // --- 5. UTILS (Chart, Voice, Emergency, Reports) ---
@@ -509,13 +653,50 @@ function toggleVoiceRecording() {
 setInterval(async () => {
     try {
         const r = await fetch(`${API_BASE}/emergency`);
-        const d = await r.json();
-        if (d.active !== isEmergency) setEmergencyState(d.active);
-    } catch (e) { }
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/36938da8-9a3b-4b1f-82c9-620a2f6e5d7d',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app.js:528',message:'emergency poll response',data:{ok:r.ok,status:r.status},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+        // #endregion
+        if (r.ok) {
+            const d = await r.json();
+            if (d.active !== isEmergency) setEmergencyState(d.active);
+        }
+    } catch (e) {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/36938da8-9a3b-4b1f-82c9-620a2f6e5d7d',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app.js:532',message:'emergency poll error',data:{error:e.message},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+        // #endregion
+    }
 }, 2000);
 
 async function toggleEmergency() {
-    await fetch(`${API_BASE}/emergency?active=${!isEmergency}`, { method: 'POST' });
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/36938da8-9a3b-4b1f-82c9-620a2f6e5d7d',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app.js:534',message:'toggleEmergency entry',data:{apiBase:API_BASE,currentState:isEmergency,newState:!isEmergency,url:`${API_BASE}/emergency`},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+    // #endregion
+    try {
+        const response = await fetch(`${API_BASE}/emergency`, { 
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ active: !isEmergency })
+        });
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/36938da8-9a3b-4b1f-82c9-620a2f6e5d7d',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app.js:539',message:'toggleEmergency response',data:{ok:response.ok,status:response.status,statusText:response.statusText},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+        // #endregion
+        if (response.ok) {
+            const data = await response.json();
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/36938da8-9a3b-4b1f-82c9-620a2f6e5d7d',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app.js:542',message:'toggleEmergency success',data:{responseData:data},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+            // #endregion
+            setEmergencyState(data.active);
+        } else {
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/36938da8-9a3b-4b1f-82c9-620a2f6e5d7d',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app.js:545',message:'toggleEmergency failed',data:{status:response.status,statusText:response.statusText},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+            // #endregion
+        }
+    } catch (err) {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/36938da8-9a3b-4b1f-82c9-620a2f6e5d7d',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app.js:548',message:'toggleEmergency error',data:{error:err.message,stack:err.stack,name:err.name},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+        // #endregion
+        console.error('Emergency toggle failed:', err);
+    }
 }
 
 function setEmergencyState(active) {

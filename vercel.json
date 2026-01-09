@@ -1,0 +1,33 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "FRONTEND/**",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*\\.(html|js|css|ico|png|jpg|jpeg|svg|woff|woff2|ttf|eot))",
+      "dest": "/FRONTEND/$1"
+    },
+    {
+      "src": "/login",
+      "dest": "/FRONTEND/login.html"
+    },
+    {
+      "src": "/",
+      "dest": "/FRONTEND/index.html"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/FRONTEND/$1"
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/FRONTEND/$1"
+    }
+  ]
+}

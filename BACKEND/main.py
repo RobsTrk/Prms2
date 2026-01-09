@@ -107,6 +107,9 @@ class PatientResponse(BaseModel):
     class Config:
         orm_mode = True
 
+class EmergencyRequest(BaseModel):
+    active: bool
+
 # ==========================================
 # 4. FASTAPI APP & ROUTES
 # ==========================================
@@ -177,8 +180,19 @@ def get_emergency():
     return emergency_state
 
 @app.post("/emergency")
-def set_emergency(active: bool):
-    emergency_state["active"] = active
+def set_emergency(request: EmergencyRequest):
+    import json
+    log_entry = {"location": "main.py:183", "message": "set_emergency entry", "data": {"active": request.active}, "timestamp": int(__import__('time').time() * 1000), "sessionId": "debug-session", "runId": "run1", "hypothesisId": "C"}
+    try:
+        with open(r"c:\PRMS+\.cursor\debug.log", "a", encoding="utf-8") as f:
+            f.write(json.dumps(log_entry) + "\n")
+    except: pass
+    emergency_state["active"] = request.active
+    log_entry2 = {"location": "main.py:186", "message": "set_emergency success", "data": {"state": emergency_state}, "timestamp": int(__import__('time').time() * 1000), "sessionId": "debug-session", "runId": "run1", "hypothesisId": "C"}
+    try:
+        with open(r"c:\PRMS+\.cursor\debug.log", "a", encoding="utf-8") as f:
+            f.write(json.dumps(log_entry2) + "\n")
+    except: pass
     return emergency_state
 
 # --- ENDPOINTS ---
