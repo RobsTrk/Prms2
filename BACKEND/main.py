@@ -70,6 +70,9 @@ class RecordCreate(BaseModel):
     icon: str
     color: str
 
+class EmergencyUpdate(BaseModel):
+    active: bool
+
 class RecordResponse(RecordCreate):
     id: int
     patient_id: int
@@ -162,8 +165,8 @@ def get_emergency():
     return emergency_state
 
 @app.post("/emergency")
-def set_emergency(active: bool):
-    emergency_state["active"] = active
+def set_emergency(update: EmergencyUpdate):
+    emergency_state["active"] = update.active
     return emergency_state
 
 # ==========================================

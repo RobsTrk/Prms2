@@ -59,11 +59,11 @@ function initDashboard() {
 }
 
 async function fetchPatients() {
-try {
+    try {
         const response = await fetch(`${API_BASE}/patients`);
-if (!response.ok) throw new Error("API Error");
+        if (!response.ok) throw new Error("API Error");
         patients = await response.json();
-renderPatientList();
+        renderPatientList();
 
         // Refresh detail view if open
         if (currentPatient) {
@@ -71,7 +71,7 @@ renderPatientList();
             if (updated) selectPatient(updated.id);
         }
     } catch (err) {
-console.error(err);
+        console.error(err);
         const listEl = document.getElementById('patient-list');
         if (listEl) listEl.innerHTML = `<p class="text-red-500 p-4 text-xs">🔴 Backend Offline. Ensure 'main.py' is running.</p>`;
     }
@@ -80,11 +80,11 @@ console.error(err);
 // --- 2. LOGIN LOGIC ---
 async function handleLogin(e) {
     e.preventDefault();
-const usernameInput = document.getElementById('email');
+    const usernameInput = document.getElementById('email');
     const passwordInput = document.getElementById('password');
 
     if (!usernameInput || !passwordInput) {
-return;
+        return;
     }
 
     try {
@@ -93,18 +93,18 @@ return;
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username: usernameInput.value, password: passwordInput.value })
         });
-if (!res.ok) {
-alert('Invalid Credentials');
+        if (!res.ok) {
+            alert('Invalid Credentials');
             return;
         }
 
         const data = await res.json();
-localStorage.setItem('prms_user', data.username);
+        localStorage.setItem('prms_user', data.username);
         localStorage.setItem('prms_role', data.role);
         window.location.href = 'index.html';
 
     } catch (error) {
-alert("Cannot connect to server: " + error.message);
+        alert("Cannot connect to server: " + error.message);
     }
 }
 
@@ -272,7 +272,7 @@ function renderScans(list) {
 
 // Update Condition / Notes (Includes Voice logic)
 async function updatePatientCondition() {
-if (!currentPatient) return;
+    if (!currentPatient) return;
     const note = document.getElementById('nurse-note')?.value || '';
     const status = document.getElementById('update-status')?.value || '';
     const discharge = document.getElementById('nurse-discharge')?.value || '';
@@ -293,7 +293,7 @@ if (!currentPatient) return;
                     color: "text-orange-600"
                 })
             });
-}
+        }
 
         // 2. Update status/discharge
         const updates = {};
@@ -306,7 +306,7 @@ if (!currentPatient) return;
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(updates)
             });
-}
+        }
 
         alert("✅ Record Updated");
         const noteEl = document.getElementById('nurse-note');
@@ -315,13 +315,13 @@ if (!currentPatient) return;
         if (statusEl) statusEl.value = "";
         fetchPatients();
     } catch (err) {
-alert("Error updating patient: " + err.message);
+        alert("Error updating patient: " + err.message);
     }
 }
 
 // Add Vital
 async function addVital() {
-const inputEl = document.getElementById('vitals-input');
+    const inputEl = document.getElementById('vitals-input');
     const val = inputEl ? parseInt(inputEl.value) : NaN;
     if (!val || !currentPatient) return;
 
@@ -334,7 +334,7 @@ const inputEl = document.getElementById('vitals-input');
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ vitals_update: val })
         });
-const recordRes = await fetch(`${API_BASE}/patients/${currentPatient.id}/record`, {
+        const recordRes = await fetch(`${API_BASE}/patients/${currentPatient.id}/record`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -345,10 +345,10 @@ const recordRes = await fetch(`${API_BASE}/patients/${currentPatient.id}/record`
                 color: "text-blue-500"
             })
         });
-if (inputEl) inputEl.value = "";
+        if (inputEl) inputEl.value = "";
         fetchPatients();
     } catch (err) {
-alert("Error adding vital: " + err.message);
+        alert("Error adding vital: " + err.message);
     }
 }
 
@@ -568,28 +568,28 @@ function toggleVoiceRecording() {
 setInterval(async () => {
     try {
         const r = await fetch(`${API_BASE}/emergency`);
-if (r.ok) {
+        if (r.ok) {
             const d = await r.json();
             if (d.active !== isEmergency) setEmergencyState(d.active);
         }
     } catch (e) {
-}
+    }
 }, 2000);
 
 async function toggleEmergency() {
-try {
+    try {
         const response = await fetch(`${API_BASE}/emergency`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ active: !isEmergency })
         });
-if (response.ok) {
+        if (response.ok) {
             const data = await response.json();
-setEmergencyState(data.active);
+            setEmergencyState(data.active);
         } else {
-}
+        }
     } catch (err) {
-console.error('Emergency toggle failed:', err);
+        console.error('Emergency toggle failed:', err);
     }
 }
 
@@ -607,7 +607,7 @@ function setEmergencyState(active) {
             const div = document.createElement('div');
             div.id = 'em-banner';
             div.className = "fixed top-0 w-full bg-red-600 text-white text-center font-bold z-50 animate-pulse";
-            div.innerText = "CODE BLUE ACTIVE";
+            div.innerText = "CODE RED ACTIVE";
             document.body.prepend(div);
         }
     } else {
